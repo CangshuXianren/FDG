@@ -14,25 +14,38 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import os
+import task_vis_map
+'''全局变量'''
+
 
 # 侦察可打击目标信息列表   [{"Name":  ,"Position": { "x": , "y":  , "z": }, "Type_Name":  , "HealthPoint": }, {},...,{}]
 strike_info = []
-# strike_info = [{'Name': 'BP_Building_People_C_2147482335', 'Position': {'x': 1237.4, 'y': -115.2, 'z': 0.5}, 'Type_Name': 'Building', 'HealthPoint': 4800}, {'Name': 'Barricade_BP_C_2147482274', 'Position': {'x': 1528.3, 'y': -82.2, 'z': 0.5}, 'Type_Name': 'Barricade_BP', 'HealthPoint': 4200}, {'Name': 'BP_AsiaSoldier_C_2147482273', 'Position': {'x': 1529.3, 'y': -75.2, 'z': 1.3}, 'Type_Name': 'Soldier', 'HealthPoint': 100}, {'Name': 'BP_Building_People_C_2147482341', 'Position': {'x': 1756.1, 'y': -57.8, 'z': 0.5}, 'Type_Name': 'Building', 'HealthPoint': 4800}, {'Name': 'IFV-Stryker_BP_C_2147482310', 'Position': {'x': 1760.3, 'y': -44.4, 'z': 0.5}, 'Type_Name': 'Stryker', 'HealthPoint': 6000}, {'Name': 'IFV-Stryker_BP_C_2147482299', 'Position': {'x': 1697.6, 'y': -309.7, 'z': 0.5}, 'Type_Name': 'Stryker', 'HealthPoint': 6000}, {'Name': 'BP_Building_People_C_2147482344', 'Position': {'x': 1760.0, 'y': -392.4, 'z': 0.5}, 'Type_Name': 'Building', 'HealthPoint': 4800}, {'Name': 'BP_Building_People_C_2147482347', 'Position': {'x': 1629.5, 'y': -654.7, 'z': 0.5}, 'Type_Name': 'Building', 'HealthPoint': 4800}, {'Name': 'IFV-Stryker_BP_C_2147482288', 'Position': {'x': 1688.7, 'y': -657.9, 'z': 0.5}, 'Type_Name': 'Stryker', 'HealthPoint': 6000}, {'Name': 'BP_Building_People_C_2147482338', 'Position': {'x': 1267.9, 'y': -653.8, 'z': 0.5}, 'Type_Name': 'Building', 'HealthPoint': 4800}, {'Name': 'IFV-Stryker_BP_C_2147482332', 'Position': {'x': 1755.5, 'y': -603.3, 'z': 0.5}, 'Type_Name': 'Stryker', 'HealthPoint': 6000}, {'Name': 'Barricade_BP_C_2147482277', 'Position': {'x': 1831.1, 'y': -362.9, 'z': 0.5}, 'Type_Name': 'Barricade_BP', 'HealthPoint': 4200}, {'Name': 'BP_AsiaSoldier_C_2147482276', 'Position': {'x': 1832.1, 'y': -354.8, 'z': 0.7}, 'Type_Name': 'Soldier', 'HealthPoint': 100}, {'Name': 'Barricade_BP_C_2147482271', 'Position': {'x': 1985.8, 'y': -626.1, 'z': 0.4}, 'Type_Name': 'Barricade_BP', 'HealthPoint': 4200}, {'Name': 'BP_AsiaSoldier_C_2147482270', 'Position': {'x': 1986.8, 'y': -616.1, 'z': 1.3}, 'Type_Name': 'Soldier', 'HealthPoint': 100}, {'Name': 'Barricade_BP_C_2147482268', 'Position': {'x': 1727.7, 'y': -741.1, 'z': 0.5}, 'Type_Name': 'Barricade_BP', 'HealthPoint': 4200}, {'Name': 'BP_AsiaSoldier_C_2147482267', 'Position': {'x': 1720.7, 'y': -740.1, 'z': 1.3}, 'Type_Name': 'Soldier', 'HealthPoint': 100}, {'Name': 'Barricade_BP_C_2147482265', 'Position': {'x': 1535.5, 'y': -889.3, 'z': 0.5}, 'Type_Name': 'Barricade_BP', 'HealthPoint': 4200}, {'Name': 'BP_AsiaSoldier_C_2147482264', 'Position': {'x': 1536.7, 'y': -882.3, 'z': 1.3}, 'Type_Name': 'Soldier', 'HealthPoint': 100}, {'Name': 'IFV-Stryker_BP_C_2147482321', 'Position': {'x': 1931.5, 'y': 250.1, 'z': 0.4}, 'Type_Name': 'Stryker', 'HealthPoint': 6000}]
+
 
 '''工具函数'''
 
 
-def vis_fig(road_source, save_flag, name):
+def path_vis(im, list):  # 输入参数是彩色图像和字典
+    if list:
+        im_vis = im.copy()
+        for dict in list:
+            Y = dict['y']
+            X = dict['x']
+            im_vis.putpixel((X, Y), (255, 0, 0, 255))
+        im_vis.show()
+
+def vis_fig(road_source, save_flag, show_flag, name):
     print(type(road_source))
     plt.title(name)
-    road_source.show()
+    if show_flag :
+        road_source.show()
     if save_flag:
         # 构建正确的文件路径，使用os.path.join确保跨平台兼容性
         save_path = os.path.join("visualization", f"{name}.png")
         road_source.save(save_path, format='PNG')
 
 
-def vis_task_info(task_info):
+def vis_task_info(task_info, save_flag, show_flag):
     # 创建一个新的figure和axes
     # print(task_info['no_fly_arena'])
     # print(len(task_info['no_fly_arena']))
@@ -96,46 +109,107 @@ def vis_task_info(task_info):
                                   facecolor='purple', alpha=0.5))
     ax.add_patch(patches.Polygon(no_fly_rectangle3, closed=True, fill=True, linewidth=1, edgecolor='black',
                                   facecolor='purple', alpha=0.5))
+    # print("emc-蓝色，mine-红色，nofly-紫色")
 
-    line_vertices = []
+    line_vertices_x = []
+    line_vertices_y = []
     # 绘制线段
-    for i in range(0,6):
+    for i in range(0, 6):
         subject_name = 'subject_{}'.format(i+1)
-        line_vertices.append(task_info[subject_name]['start_line'][0]['x'])
-        line_vertices.append(task_info[subject_name]['start_line'][0]['y'])
-        line_vertices.append(task_info[subject_name]['start_line'][1]['x'])
-        line_vertices.append(task_info[subject_name]['start_line'][1]['y'])
-        line_vertices.append(task_info[subject_name]['end_line'][0]['x'])
-        line_vertices.append(task_info[subject_name]['end_line'][0]['y'])
-        line_vertices.append(task_info[subject_name]['end_line'][1]['x'])
-        line_vertices.append(task_info[subject_name]['end_line'][1]['y'])
-    # print(line_vertices)
+        line_vertices_x.append([task_info[subject_name]['start_line'][0]['x'], task_info[subject_name]['start_line'][1]['x']])
+        line_vertices_y.append([task_info[subject_name]['start_line'][0]['y'], task_info[subject_name]['start_line'][1]['y']])
+        line_vertices_x.append([task_info[subject_name]['end_line'][0]['x'], task_info[subject_name]['end_line'][1]['x']])
+        line_vertices_y.append([task_info[subject_name]['end_line'][0]['y'], task_info[subject_name]['end_line'][1]['y']])
 
-    for i in range(6):
-        subject_name = 'subject_{}'.format(i+1)
-        plt.plot([line_vertices[i], line_vertices[i+2]], [line_vertices[i+1], line_vertices[i+3]])
-        plt.text(line_vertices[i] + random.uniform(100,200), line_vertices[i+1] + random.uniform(200,300), subject_name+'_s')
-        plt.plot([line_vertices[i+4], line_vertices[i + 6]], [line_vertices[i + 5], line_vertices[i + 7]])
-        plt.text(line_vertices[i+4]  + random.uniform(100,200), line_vertices[i+5] + random.uniform(200,300), subject_name+'e')
+    for i in range(12):
+        if (i % 2) == 0:
+            subject_name = 'subject_{}'.format(i/2 + 1)
+            plt.plot(line_vertices_x[i], line_vertices_y[i])
+            plt.text(line_vertices_x[i][0] + random.uniform(10,20), line_vertices_y[i][0] + random.uniform(10,20), subject_name+'_S')
+        else:
+            subject_name = 'subject_{}'.format(i/2 + 1)
+            plt.plot(line_vertices_x[i], line_vertices_y[i])
+            plt.text(line_vertices_x[i][0] + random.uniform(10,20), line_vertices_y[i][0] + random.uniform(10,20), subject_name+'_E')
 
-    # # 添加每个矩形的名称标签
-    # ax.text(300, 300, 'Arena', fontsize=12, color='black')
-    # ax.text(1000, 1000, 'EMC Arena', ha='center', va='center', fontsize=12, color='white')
-    # ax.text(-500, -750, 'Mine Arena', ha='center', va='center', fontsize=12, color='white')
-
-    # 设置坐标轴的范围以确保所有矩形可见
-    ax.set_xlim(-2000, 3000)  # 注意调整x轴的范围以包含最后一个矩形
-    ax.set_ylim(-1500, 500)  # 同样调整y轴的范围
-
-    # 添加网格线和关闭坐标轴标签以使图形更整洁（可选）
-    # ax.grid(True)
-    # ax.axis('off')
+    # # 设置坐标轴的范围以确保所有矩形可见
+    # ax.set_xlim(-2000, 3000)  # 注意调整x轴的范围以包含最后一个矩形
+    # ax.set_ylim(-1500, 500)  # 同样调整y轴的范围
 
     # 显示图形
     plt.title('all_arena')
-    save_path = os.path.join("visualization", "all_arena.png")
-    plt.savefig(save_path, format='PNG')
-    plt.show()
+    if save_flag :
+        save_path = os.path.join("visualization", "all_arena.png")
+        plt.savefig(save_path, format='PNG')
+    if show_flag :
+        plt.show()
+
+
+def p2p_dist(pt1, pt2):
+    return math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
+
+
+'''控制算法'''
+
+
+def calculate_alpha(current_pose, lookahead_point):
+    dx = lookahead_point['x'] - current_pose[0]
+    dy = lookahead_point['y'] - current_pose[1]
+    alpha = math.atan2(dy, dx) - current_pose[2]
+    return alpha
+
+
+def calculate_cmd(alpha):
+    global last_steer
+    steering_angle = STEER_CONTROL_KP * alpha
+    # if last_steer != math.inf and math.fabs(steering_angle - last_steer) > STEER_MAX_ACC:
+    #     if alpha > 0.0:
+    #         steering_angle = last_steer + STEER_MAX_ACC
+    #     else:
+    #         steering_angle = last_steer - STEER_MAX_ACC
+    throttle = 1.0
+    print('alpha:', alpha, 'steer:', steering_angle, 'throttle:', throttle)
+    return throttle, steering_angle
+
+
+def pure_pursuit_control(path, node, current_pose):
+    closest_point_index = find_closest_point_index(path, current_pose)
+    lookahead_point_index = find_lookahead_point_index(path, closest_point_index, current_pose)
+    lookahead_point = path[lookahead_point_index]
+    alpha = calculate_alpha(current_pose, lookahead_point)
+    throttle, steering_angle = calculate_cmd(alpha)
+    global last_steer
+    last_steer = steering_angle
+    node.apply_vehicle_control(throttle, steering_angle, 0.0, False, 0)
+
+
+def find_closest_point_index(path, current_pose):
+    distances = [math.sqrt((point['x'] - current_pose[0]) ** 2 + (point['y'] - current_pose[1]) ** 2) for point in
+                 path]
+    return distances.index(min(distances))
+
+
+def find_lookahead_point_index(path, closest_point_index, current_pose):
+    for i in range(closest_point_index + 1, len(path)):
+        if math.sqrt(
+                (path[i]['x'] - current_pose[0]) ** 2 + (path[i]['y'] - current_pose[1]) ** 2) > LOOKAHEAD_DISTANCE:
+            return i
+    return len(path) - 1
+
+
+def pp_path_track(path, node):
+    end_pt = [path[-1]['x'], path[-1]['y']]
+    current_pose = [node.get_location()[0], node.get_location()[1], math.radians(node.get_attitude()[0])]
+    while p2p_dist(end_pt, current_pose) > PATH_TRACK_THRESHOLD:
+        if should_replan:
+            break
+        tik = time.time()
+        pure_pursuit_control(path, node, current_pose)
+        tok = time.time()
+        pp_dt = tok - tik
+        print("pp_dt:", pp_dt)
+        current_pose = [node.get_location()[0], node.get_location()[1], node.get_attitude()[0]]
+        time.sleep(1.0)
+    brakedown(node)
 
 
 '''ue类'''
@@ -382,8 +456,7 @@ def follow_route_points(_drone, _vau_route_points, _drone_start_point):  # 1. �
 
 
 def reduced_target_point(route):  # route是一维列表，是一个无人机的所有轨迹点（字典格式）组成的列表，用于减少途径点，从而减少运行时间
-    reduced_point = []
-    reduced_point.append(route[0])
+    reduced_point = [route[0]]
     for j in range(1, len(route) - 1, 1):  # 遍历一次除起终点的所有点，筛选出需要的点
         # 判断方法：当前点与前一点和后一点是否共线；通过向量的行列式判断
         delta1_x = route[j]['x'] - route[j - 1]['x']
@@ -425,47 +498,55 @@ def vanguard(_routes_points):
 ''' ——————————第3阶段无人车路径规划需要用到的函数—————————— '''
 
 
-def stage_3_core():
-    va_rc_complete_time, va_rc_complete_code = game.stage_complete("vau_reconnaissance_end")  # 测试用，不然调不出来路网地图，最后记得删除
-    plan_start_time, plan_start_code = game.stage_start("plan_start")
-    if plan_start_code == 200:
-        print("【3阶段】plan_start")
-        # vehicle_node = [sw_node7, sw_node2, sw_node1, sw_node3, sw_node5, sw_node4, sw_node6]  # node7先出发探路，剩下的按照出发顺序排好
-        vehicle_nodes = [sw_node1, sw_node2, sw_node3, sw_node4, sw_node5, sw_node6, sw_node7]
-        info = list(game.get_task_info())  # 将元组转换成列表 这两句话要优化，写一遍就行
-        whole_arena_data = json.loads(info[0])  # 把区域信息提取出来，并解析为有效的字典
-        start_line = whole_arena_data["subject_3"]["start_line"]
-        end_line = whole_arena_data["subject_3"]["end_line"]
-        vis_task_info(whole_arena_data)
+# 定时任务函数，用于定期检查是否需要重新规划
+def periodic_replan(node, interval, map_rgb):
+    global should_replan
+    while True:
+        time.sleep(interval)  # 等待指定时间
+        if replan4detect(node, map_rgb):
+            print('【3阶段】检测到障碍物')
+            should_replan = True
+            break
 
-        road_net_info = game.get_road_network()
-        map_img = road_net_info[0]
-        vis_fig(map_img, True, "roadmap")
+def replan4detect(node, map_rgb):
+    have_obs = False
+    current_detect_info = list(node.detect_situation())
+    detect_obs_info = json.loads(current_detect_info[2])
 
-        scale = road_net_info[1]
-        offset_x = road_net_info[2][0]
-        offset_y = road_net_info[2][1]
-        plan_and_follow(vehicle_nodes, map_img, start_line, end_line)
+    # 检测全部障碍物，版本1
+    # detect_obses = []
+    # for each_obs in detect_obs_info:
+    #     if each_obs['Type'] == 'Other':
+    #         detect_obses.append([round(each_obs['Position']['X'] / 100, 0),
+    #                              round(each_obs['Position']['Y'] / 100, 0)])
+    # if detect_obses:
+    #     have_obs = True
+    #     brakedown(node)
+    #     for each_obs in detect_obses:
+    #         obs_location_pixel = ue_to_pixel(each_obs)
+    #         map_rgb = edit_map(map_rgb, obs_location_pixel)  # 调整地图，添加障碍物的位置为不可通行区域
 
-        change_line_fight(sw_node2)
-        time.sleep(1)
-        change_line_fight(sw_node1)
-        time.sleep(1)
-        change_line_fight(sw_node3)
-        plan_complete_time, plan_complete_code = game.stage_complete("plan_end")
-        if plan_complete_code == 200:
-            print("plan_end")
+    # 检测第一个就返回，版本2
+    for each_obs in detect_obs_info:
+        if each_obs['Type'] == 'Other':
+            have_obs = True
+            brakedown(node)
+            obs_location_pixel = ue_to_pixel(each_obs)
+            map_rgb = edit_map(map_rgb, obs_location_pixel)  # 调整地图，添加障碍物的位置为不可通行区域
+            return have_obs
+
+    return have_obs
 
 
 def pixel_to_ue(_point_pixel):
-    _ue_x = _point_pixel[0] / scale + offset_x
-    _ue_y = _point_pixel[1] / scale + offset_y
+    _ue_x = _point_pixel[0] / SCALE + OFFSET_X
+    _ue_y = _point_pixel[1] / SCALE + OFFSET_Y
     return [_ue_x, _ue_y]
 
 
 def ue_to_pixel(_point_ue):
-    _pixel_x = int(scale * (_point_ue[0] - offset_x))
-    _pixel_y = int(scale * (_point_ue[1] - offset_y))
+    _pixel_x = int(SCALE * (_point_ue[0] - OFFSET_X))
+    _pixel_y = int(SCALE * (_point_ue[1] - OFFSET_Y))
     return [_pixel_x, _pixel_y]
 
 
@@ -548,8 +629,7 @@ def Path_Search(map, start_pos1, target_position1, flag):  # flag = 1,过线就�
     while open_list:
         # 取出第一个（F最小，判定最优）位置
         current_position = open_list[0]
-        print("当前点")
-        print(current_position.y, current_position.x)  # 像素坐标
+        # print("当前点:", current_position.y, current_position.x)
         x_pos = current_position.x
         y_pos = current_position.y
         open_list.remove(current_position)
@@ -558,7 +638,7 @@ def Path_Search(map, start_pos1, target_position1, flag):  # flag = 1,过线就�
         if ((current_position.x == target_position.x and current_position.y == target_position.y) or
                 (flag == 1 and current_position.y > target_position.y) or
                 (flag == 2 and current_position.x <= target_position.x)):  # 当前点就是终点
-            print("成功找到解")
+            print("A*已生成最优路径")
             # 内存储Position
             tmp = []
             while current_position:
@@ -601,7 +681,7 @@ def Path_Search(map, start_pos1, target_position1, flag):  # flag = 1,过线就�
 # 作搜索前处理，将原始彩色图初始化为0（有障碍）,1（无障碍）的地图
 def Process_before(image):
     im_gray = image.convert("L")
-    print("地图初始化", time.time())
+    # print("A*地图初始化", time.time())
     mapp = np.array(im_gray)
     mapp = mapp.astype(bool)
     rows = len(mapp)
@@ -612,7 +692,7 @@ def Process_before(image):
     G_value = [[0 for _ in range(cols)] for _ in range(rows)]
     H_value = [[0 for _ in range(cols)] for _ in range(rows)]
     Parent = [[None for _ in range(cols)] for _ in range(rows)]
-    print("地图初始化完成", time.time())
+    # print("A*地图初始化完成", time.time())
     return mapp
 
 
@@ -681,16 +761,6 @@ def obs_edit_map(im_RGB):  # 修改map
     return mapp
 
 
-def Path_visualization(im, list):  # 输入参数是彩色图像和字典
-    if list:
-        im_vis = im.copy()
-        for dict in list:
-            Y = dict['y']
-            X = dict['x']
-            im_vis.putpixel((X, Y), (255, 0, 0))
-        im_vis.show()
-
-
 '''——————A* end————————'''
 
 
@@ -699,24 +769,8 @@ def find_path(_map_rgb, _start_point, _end_point, _flag):  # 传进去的是像�
     pos_dict = Path_Search(pixel_map, _start_point, _end_point, _flag)
     pos_dict_30 = dict_slice(pos_dict)
     # print(pos_dict_30)
-    # Path_visualization(_map_rgb, pos_dict)
+    # path_vis(_map_rgb, pos_dict)
     return pos_dict_30
-
-    # imgray = _map.convert("L")
-    # mapp = np.array(imgray)
-    # dict_tmp = []
-    # dict5_tmp = []
-    # board = np.array(Map_Initialization(mapp))
-    # dict_tmp = SearchPath(board, _start_point, _end_point)
-    # # Path_visualization(_map, dict_tmp)
-    # output_len = 30
-    # if dict_tmp == None:
-    #     print("未找到路径")
-    # else:
-    #     dict5_tmp = dict_tmp[::output_len]
-    #     if len(dict_tmp) % output_len != 1:
-    #         dict5_tmp.append(dict_tmp[-1])
-    # return dict5_tmp
 
 
 def tga_to_array(tga_image):
@@ -785,7 +839,7 @@ def veh_go_to(_node, _path_point_x, _path_point_y, _path_point_z, _last):  # 控
     y1 = _path_point_y[1]  # 未来第一个点纵坐标
     x2 = _path_point_z[0]  # 未来第二个点横坐标
     y2 = _path_point_z[1]  # 未来第二个点纵坐标
-    print(_path_point_x, _path_point_y, _path_point_z)
+    # print(_path_point_x, _path_point_y, _path_point_z)
     cv = 7  # 临界值，当x或者y的变化量大于cv才判断为转弯
     cvd = 40  # 航向角临界值，航向角基于标准角度的偏移值小于cvd,判定为正方向
     cvv = 3  # 为了缩小倒车转弯的判定范围
@@ -1304,52 +1358,54 @@ def keep_straight(_vehicle, _y):
     _vehicle.apply_vehicle_control(1, u_steer, 0, False, 0)
 
 
-def tail_the_explorer(_vehicle, __explorer_path, _delay_index):
+def tail_the_explorer(map_rgb, node, end_point_fine_pixel, _end_line_ue, yield_duration, follower_path):
+    print(node.get_node_info()[1],"start tail")
     last_state = 'start'
     last_mode = 'z'
     last_toward = 'z'
     last_target_toward = 'z'
     last = [last_state, last_mode, last_toward, last_target_toward]
-    for _index, _path_point in enumerate(__explorer_path):
+    for _index, _path_point in enumerate(follower_path):
         _path_point_pixel = [_path_point["x"], _path_point["y"]]
         _path_point_ue = pixel_to_ue(_path_point_pixel)
 
-        if _index < len(__explorer_path) - 1:
-            path_point_next_pixel = [__explorer_path[_index + 1]["x"], __explorer_path[_index + 1]["y"]]
+        if _index < len(follower_path) - 1:
+            path_point_next_pixel = [follower_path[_index + 1]["x"], follower_path[_index + 1]["y"]]
         else:  # 最后一个点时
             path_point_next_pixel = [_path_point["x"], _path_point["y"]]
         _path_point_next_ue = pixel_to_ue(path_point_next_pixel)  # 当前要前往的坐标点的下一个坐标点，对于最后一个点要怎么处理??
 
-        _cur_location_ue = [_vehicle.get_location()[0], _vehicle.get_location()[1]]  # 当前的位置坐标
-        last = list(veh_go_to(_vehicle, _cur_location_ue, _path_point_ue, _path_point_next_ue, last))
-        if cross_the_end(_vehicle, end_line):  # 过线就停车，有问题，车容易挤在一起！！
+        _cur_location_ue = [node.get_location()[0], node.get_location()[1]]  # 当前的位置坐标
+        last = list(veh_go_to(node, _cur_location_ue, _path_point_ue, _path_point_next_ue, last))
+
+        if cross_the_end(node, _end_line_ue):
             start_time = time.time()
-            while time.time() - start_time < _delay_index:
-                cur_y = _vehicle.get_location()[1]
-                keep_straight(_vehicle, cur_y)
-            _drive_brake(_vehicle)
-            # time.sleep(_delay_index)  # 过了线之后，第一辆车至第六辆车分别延时5、4、3、2、1、0秒再刹车
-            # _vehicle.apply_vehicle_control(0, 0, 0, True, 0)
+            while time.time() - start_time < yield_duration:
+                cur_y = node.get_location()[1]
+                keep_straight(node, cur_y)
+            brakedown(node)
             break
 
 
-def follow_the_explorer(__vehicle_nodes, _explorer_path):  # 让后续的其他车辆跟着走第一台车走的路径（可能包含遇到障碍的折返）
-    threads = []  # thread名称和飞机的重合，是否有风险？
-    for i, vehicle in enumerate(__vehicle_nodes):
-        if i != 0:
-            time.sleep(50)  # 让各个车之间错开60秒
-        # 第1辆车i=0，延时5s刹车；第2辆车i=1，延时4s刹车；...；第6辆车i=5，延时0s刹车
-        thread = threading.Thread(target=tail_the_explorer, args=(vehicle, _explorer_path, 5 - 1 * i))  # 7.5 - 1.3 * i
+def follow_the_explorer(vehicle_nodes, map_rgb, end_point_fine_pixel, _end_line_ue):
+    threads = []
+    sw_followers = [vehicle_nodes[5], vehicle_nodes[0], vehicle_nodes[1], vehicle_nodes[2], vehicle_nodes[3], vehicle_nodes[4]]
+
+    for i, follower in enumerate(sw_followers):
+        start_point_ue = [follower.get_location()[0], follower.get_location()[1]]
+        start_point_pixel = ue_to_pixel(start_point_ue)
+        follower_path = find_path(map_rgb, start_point_pixel, end_point_fine_pixel, 1)  # start_point, end_point是列表格式
+        thread = threading.Thread(target=tail_the_explorer, args=(map_rgb, follower, end_point_fine_pixel, _end_line_ue, 5 - i, follower_path))
         thread.start()
         threads.append(thread)
+        time.sleep(10)
+
     for thread in threads:
         thread.join()
 
 
 def plan_and_follow(_vehicle_node, _road_net_image, _start_line_ue, _end_line_ue):
-    # explorer = _vehicle_node[6]  # 把第一辆扫雷车设置为探路者
-    explorer = _vehicle_node[5]
-    explorer_path = []  # 保存探索路径供后方车辆使用？？不同段的路径怎么拼接？？？
+    explorer = _vehicle_node[6]
     map_rgb = _road_net_image  # 取出路网rgb地图
     map_array = list(tga_to_array(map_rgb))
     start_point_ue = [explorer.get_location()[0], explorer.get_location()[1]]
@@ -1362,17 +1418,21 @@ def plan_and_follow(_vehicle_node, _road_net_image, _start_line_ue, _end_line_ue
         print("【3阶段】找到explorer目的地。坐标：", end_point_fine_pixel)
     else:
         print("【3阶段】未找到explorer目的地")
+
+    # fsm
     while not cross_the_end(explorer, _end_line_ue):  # 当头车没有到达指定的停止线时，进行路径探索
         explorer_path_cur = find_path(map_rgb, start_point_pixel, end_point_fine_pixel,
                                       1)  # start_point, end_point是列表格式
-        print("【3阶段】explorer路径：",explorer_path_cur)  # 在这打印出的路径
+        # print(explorer_path_cur)  # 在这打印出的路径
 
-        # 老版的控制前置条件
+        # 初始化状态
         last_state = 'start'
         last_mode = 'z'
         last_toward = 'z'
         last_target_toward = 'z'
         last = [last_state, last_mode, last_toward, last_target_toward]
+
+        # 逐点跟踪
         for index, path_point in enumerate(explorer_path_cur):  # 规划出的路径是由字典构成的列表
             path_point_pixel = [path_point["x"], path_point["y"]]
             path_point_ue = pixel_to_ue(path_point_pixel)  # 当前要前往的坐标点
@@ -1380,22 +1440,23 @@ def plan_and_follow(_vehicle_node, _road_net_image, _start_line_ue, _end_line_ue
                 path_point_next_pixel = [explorer_path_cur[index + 1]["x"], explorer_path_cur[index + 1]["y"]]
             else:  # 最后一个点时
                 path_point_next_pixel = [path_point["x"], path_point["y"]]
-            path_point_next_ue = pixel_to_ue(path_point_next_pixel)  # 当前要前往的坐标点的下一个坐标点，对于最后一个点要怎么处理??
-            # print(path_point_pixel, path_point_next_pixel)
+            path_point_next_ue = pixel_to_ue(path_point_next_pixel)
             cur_location = [explorer.get_location()[0], explorer.get_location()[1]]  # 当前的位置坐标
             whole_info_veh = list(explorer.detect_situation())
             detect_res_veh = json.loads(whole_info_veh[2])
-            obs_warn = 0
+
+            have_obs_flag = False
             for each_detect_res_veh in detect_res_veh:
                 if each_detect_res_veh["Type"] == "Other":
-                    obs_warn = 1
+                    have_obs_flag = True
                     obs_location_ue = [
                         round(each_detect_res_veh["Position"]["X"] / 100, 0),
                         round(each_detect_res_veh["Position"]["Y"] / 100, 0)
                     ]  # 障碍物坐标读出来
-                    break  # 就读取一个other？？？
-                    # 容易陷入死循环，前一次探测到障碍物，刹车，重新规划之后再次探测，由于还没来得及动，就又检测到障碍物，然后再刹车重新规划...应该先走然后再探测
-            if obs_warn:  # 100m内有障碍物
+                    print("【3阶段】explorer_replan")
+                    break  # 就读取一个other
+
+            if have_obs_flag:  # 100m内有障碍物
                 while explorer.get_velocity()[0] or explorer.get_velocity()[1]:
                     explorer.apply_vehicle_control(0, 0, 0, True, 0)
                 explorer.apply_vehicle_control(-1, 0, 0, False, 0)
@@ -1406,24 +1467,14 @@ def plan_and_follow(_vehicle_node, _road_net_image, _start_line_ue, _end_line_ue
                 stay_x, stay_y, _, _ = explorer.get_location()
                 start_point_reset = [stay_x, stay_y]  # 将下次A*规划的起始位置设置成当前停车点
                 start_point_pixel = ue_to_pixel(start_point_reset)
-                explorer_path_cur = explorer_path_cur[:index]
                 break
             else:  # 100m内无障碍物
-                # veh_go_to(explorer, cur_location, path_point_ue)  # 输入一个轨迹点时候的函数
                 last = list(veh_go_to(explorer, cur_location, path_point_ue, path_point_next_ue, last))  # 输入两个轨迹点时候的函数
-        explorer_path += explorer_path_cur  # 可以去掉
 
+    time.sleep(2)
+    brakedown(explorer)
 
-    _drive_brake(explorer)
-
-    follower6 = _vehicle_node[0]
-    follower2 = _vehicle_node[1]
-    f_start_point_ue = [follower6.get_location()[0],
-                        round((follower6.get_location()[1] + follower2.get_location()[1]) / 2, 1)]
-    f_start_point_pixel = ue_to_pixel(f_start_point_ue)
-    follower_path = find_path(map_rgb, f_start_point_pixel, end_point_fine_pixel, 1)  # start_point, end_point是列表格式
-    print(follower_path)
-    follow_the_explorer(_vehicle_node[:6], follower_path)  # 后方车辆跟随头车轨迹行驶
+    follow_the_explorer(_vehicle_node[:6], map_rgb, end_point_fine_pixel, _end_line_ue)  # 后方车辆跟随头车轨迹行驶
 
 
 '''——————————————————————————————————————————————————'''
@@ -1439,29 +1490,18 @@ def is_repeat_line(lst, target, threshold):
 
 
 def get_roads_in_region(_img, _lb_point_pixel, _rt_point_pixel, threshold=128):
-    # # 将 TGA 图片对象转换为 numpy 数组
-    # img_array = np.array(_img, dtype=np.uint8)
-    # # 将 numpy 数组转换为 OpenCV 图像对象
-    # image = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
-    # # 1. 将图像转换为灰度图像
-    # gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-
+    # 将 TGA 图片对象转换为 numpy 数组
+    img_array = np.array(_img, dtype=np.uint8)
+    # 将 numpy 数组转换为 OpenCV 图像对象
+    image = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
     # 1. 将图像转换为灰度图像
-    image = cv2.imread(_img)
-    if image is None:
-        print("Error loading image")
-    else:
-        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     # 2. 二值化灰度图
     _, binary = cv2.threshold(gray_image, threshold, 255, cv2.THRESH_BINARY)
     # 3. 裁剪小矩形区域
     sub_image = binary[_lb_point_pixel[1]:_rt_point_pixel[1], _lb_point_pixel[0]:_rt_point_pixel[0]]
     # 4. 边缘检测获取道路边界
     edges = cv2.Canny(sub_image, 10, 200)
-    # cv2.imshow('Edges', dilated_edges)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
-    # print(edges)
     # 5. 识别横向和纵向的路并记录起始点和终点坐标
     # 参数可以再调，尽可能让所有线段都出现在lines里
     lines = cv2.HoughLinesP(edges, rho=0.5, theta=np.pi / 360, threshold=50, minLineLength=100, maxLineGap=300)
@@ -1472,7 +1512,7 @@ def get_roads_in_region(_img, _lb_point_pixel, _rt_point_pixel, threshold=128):
     vertical_roads = []
     h_length = int(abs(_lb_point_pixel[0] - _rt_point_pixel[0]))
     v_length = int(abs(_lb_point_pixel[1] - _rt_point_pixel[1]))
-    # 5. 提取道路边界，lines里面有很多线段，因此只要y1y2值接近的就是水平道路，x1x2值接近的就是垂直道路
+    # 6. 提取道路边界，lines里面有很多线段，因此只要y1y2值接近的就是水平道路，x1x2值接近的就是垂直道路
     for line in lines:
         x1, y1, x2, y2 = line[0]
         if abs(y1 - y2) <= 6:
@@ -1508,7 +1548,7 @@ def get_roads_in_region(_img, _lb_point_pixel, _rt_point_pixel, threshold=128):
     return horizontal_roads, vertical_roads
 
 
-def _drive_brake(_node):
+def brakedown(_node):
     _node.apply_vehicle_control(0, 0, 1, True, 0)
     _node.apply_vehicle_control(-1, 0, 0, False, 0)
     time.sleep(0.1)
@@ -1682,125 +1722,6 @@ def sweeper_go_to(__sweeper, _sweep_route, _flag):  # 给扫雷车定制的轨�
             x_go_to(__sweeper, cur_location, path_point_ue)
 
 
-# def sweeper_plan(__sweeper, _hor_road, _ver_road):  # 单个扫雷车横纵道路轨迹规划
-#     # 横向道路轨迹规划
-#     hor_lb_ue = pixel_to_ue([_hor_road["start_x"], _hor_road["bottom_y"]])
-#     hor_rt_ue = pixel_to_ue([_hor_road["end_x"], _hor_road["top_y"]])
-#     print("hor_lb_ue", hor_lb_ue)
-#     print("hor_rt_ue", hor_rt_ue)
-#     hor_sweeper_cur_location_ue = [__sweeper.get_location()[0], __sweeper.get_location()[1]]
-#     hor_sweeper_cur_location_pixel = ue_to_pixel(hor_sweeper_cur_location_ue)
-#     hor_start_point_ue = [hor_lb_ue[0], hor_lb_ue[1] + 3]
-#     hor_start_point_pixel = ue_to_pixel(hor_start_point_ue)
-#     hor_cur_start_path = find_path(map_img, hor_sweeper_cur_location_pixel, hor_start_point_pixel, 0)  # map还得传进来？？？要改成像素坐标！！！
-#     veh_move(__sweeper, hor_cur_start_path)  # 扫雷车移动到横向扫雷区起点
-#
-#     hor_sweeper_current_x = hor_start_point_ue[0]
-#     hor_sweeper_current_y = hor_start_point_ue[1] + 1.5  # +1是为了避免道路倾斜车上马路牙
-#     hor_para_step = 20  # 水平移动步长
-#     hor_vert_step = 6  # 垂直移动步长
-#     hor_n = int(0.13 * _hor_road["width"]) + 1
-#     hor_sweep_route = []
-#     hor_direction = "right"
-#     while hor_n:
-#         # 向右水平运动，x每次加hor_para_step，直到运动到道路边界
-#         if hor_direction == "right":
-#             while (hor_sweeper_current_x + hor_para_step) < hor_rt_ue[0]:
-#                 hor_sweeper_current_x += hor_para_step
-#                 hor_sweep_route.append({"x": round(hor_sweeper_current_x, 1), "y": round(hor_sweeper_current_y, 1)})
-#         # 向左水平运动，x每次减hor_para_step，直到运动到道路边界
-#         else:
-#             while (hor_sweeper_current_x - hor_para_step) > hor_lb_ue[0]:
-#                 hor_sweeper_current_x -= hor_para_step
-#                 hor_sweep_route.append({"x": round(hor_sweeper_current_x, 1), "y": round(hor_sweeper_current_y, 1)})
-#         hor_sweeper_current_y += hor_vert_step
-#         hor_sweep_route.append({"x": round(hor_sweeper_current_x, 1), "y": round(hor_sweeper_current_y, 1)})
-#         hor_direction = "left" if hor_direction == "right" else "right"
-#         hor_n -= 1
-#     print(hor_sweep_route)
-#     sweeper_go_to(__sweeper, hor_sweep_route, 0)  # 规划完之后让车跟着轨迹走，0横向
-#     # 刹车部分
-#     _brake_v = __sweeper.get_velocity()[3]
-#     __sweeper.apply_vehicle_control(0, 0, 1, True, 0)
-#     time.sleep(0.5)
-#     if abs(__sweeper.get_velocity()[3] - _brake_v) >= 0.3:  # 检测速度是否变化
-#         __sweeper.apply_vehicle_control(0, 0, 1, True, 0)
-#         time.sleep(2.5)
-#     else:
-#         __sweeper.apply_vehicle_control(-1, 0, 0, False, 0)
-#         time.sleep(0.5)
-#         __sweeper.apply_vehicle_control(0, 0, 1, True, 0)
-#         time.sleep(3)
-#
-#     # 纵向道路轨迹规划
-#     ver_lb_ue = pixel_to_ue([_ver_road["left_x"], _ver_road["start_y"]])
-#     ver_rt_ue = pixel_to_ue([_ver_road["right_x"], _ver_road["end_y"]])
-#     print("ver_lb_ue", ver_lb_ue)
-#     print("ver_rt_ue", ver_rt_ue)
-#     ver_sweeper_cur_location_ue = [__sweeper.get_location()[0], __sweeper.get_location()[1]]
-#     ver_sweeper_cur_location_pixel = ue_to_pixel(ver_sweeper_cur_location_ue)
-#     # ver_start_point_ue = [ver_rt_ue[0] - 5, ver_rt_ue[1]]
-#     ver_start_point_ue = [ver_rt_ue[0] - 3, ver_lb_ue[1]]
-#     ver_start_point_pixel = ue_to_pixel(ver_start_point_ue)
-#     ver_cur_start_path = find_path(map_img, ver_sweeper_cur_location_pixel, ver_start_point_pixel, 0)  # map还得传进来？？？
-#     print(ver_cur_start_path[:-2])
-#     veh_move(__sweeper, ver_cur_start_path[:-2])  # 扫雷车移动到纵向扫雷区起点，去除了最后一个点
-#
-#     ver_sweeper_current_x = ver_start_point_ue[0] + 1  # +1是为了避免道路倾斜车上马路牙
-#     ver_sweeper_current_y = ver_start_point_ue[1]
-#     ver_para_step = 6  # 水平移动步长
-#     ver_vert_step = 20  # 垂直移动步长
-#     ver_n = int(0.13 * _hor_road["width"]) + 1
-#     ver_sweep_route = []
-#     ver_direction = "up"
-#     while ver_n:
-#         # 向上垂直运动，y每次加ver_vert_step，直到运动到道路边界
-#         if ver_direction == "up":
-#             while (ver_sweeper_current_y + ver_vert_step) < ver_rt_ue[1]:
-#                 ver_sweeper_current_y += ver_vert_step
-#                 ver_sweep_route.append({"x": round(ver_sweeper_current_x, 1), "y": round(ver_sweeper_current_y, 1)})
-#         # 向下垂直运动，y每次减ver_vert_step，直到运动到道路边界
-#         else:
-#             while (ver_sweeper_current_y - ver_para_step) > ver_lb_ue[1]:
-#                 ver_sweeper_current_y -= ver_vert_step
-#                 ver_sweep_route.append({"x": round(ver_sweeper_current_x, 1), "y": round(ver_sweeper_current_y, 1)})
-#         ver_sweeper_current_x -= ver_para_step
-#         ver_sweep_route.append({"x": round(ver_sweeper_current_x, 1), "y": round(ver_sweeper_current_y, 1)})
-#         ver_direction = "down" if ver_direction == "up" else "up"
-#         ver_n -= 1
-#     print(ver_sweep_route)
-#     sweeper_go_to(__sweeper, ver_sweep_route, 1)  # 规划完之后让车跟着轨迹走，1纵向
-#     # 刹车部分
-#     _brake_v = __sweeper.get_velocity()[3]
-#     __sweeper.apply_vehicle_control(0, 0, 1, True, 0)
-#     time.sleep(0.5)
-#     if abs(__sweeper.get_velocity()[3] - _brake_v) >= 0.3:  # 检测速度是否变化
-#         __sweeper.apply_vehicle_control(0, 0, 1, True, 0)
-#         time.sleep(2.5)
-#     else:
-#         __sweeper.apply_vehicle_control(-1, 0, 0, False, 0)
-#         time.sleep(0.5)
-#         __sweeper.apply_vehicle_control(0, 0, 1, True, 0)
-#         time.sleep(3)
-
-
-# def plan_sweep_route(_sweepers, _hor_roads, _ver_roads):  # 给两个扫雷车分别开一个线程，一个车管一横一纵两条路
-#     sweeper_plan(_sweepers[0], _hor_roads[0], _ver_roads[0])  # 测试用，最后记得删除
-#     time.sleep(2)
-#     sweeper_plan(_sweepers[1], _hor_roads[1], _ver_roads[1])  # 测试用，最后记得删除
-#
-#
-#
-#     # threads = []
-#     # for i, _sweeper in enumerate(_sweepers):
-#     #     if i != 0:
-#     #         time.sleep(60)  # 让各个车之间错开60秒
-#     #     thread = threading.Thread(target=sweeper_plan, args=(_sweeper, _hor_roads[i], _ver_roads[i]))
-#     #     thread.start()
-#     #     threads.append(thread)
-#     # for thread in threads:
-#     #     thread.join()
-
 def sweeper_hor_plan(__sweeper, _hor_road, _ver_road, _to_hor_mine_path):  # 单个扫雷车横纵道路轨迹规划
     # 横向道路轨迹规划
     hor_lb_ue = pixel_to_ue([_hor_road["start_x"], _hor_road["bottom_y"]])
@@ -1921,10 +1842,6 @@ def plan_sweep_route(_sweepers, _hor_roads, _ver_roads):  # 给两个扫雷车�
     ver_cur_start_path_1 = find_path(map_img, ver_sweeper_cur_location_pixel_1, ver_start_point_pixel_1,
                                      0)  # map还得传进来？？？
     to_ver_mine_path.append(ver_cur_start_path_1)
-
-    # sweeper_ver_plan(_sweepers[0], _hor_roads[0], _ver_roads[0], to_ver_mine_path[0])  # 测试用，最后记得删除
-    # time.sleep(2)
-    # sweeper_ver_plan(_sweepers[1], _hor_roads[1], _ver_roads[1], to_ver_mine_path[1])  # 测试用，最后记得删除
 
     threads2 = []
     for i, _sweeper in enumerate(_sweepers):
@@ -2150,14 +2067,8 @@ def change_line_fight(_node):  # 电磁干扰车要换道躲开前方的打击�
     time.sleep(2.7)
     _node.apply_vehicle_control(1, -0.5, 0, False, 0)
     time.sleep(1)
-    _drive_brake(_node)
+    brakedown(_node)
     time.sleep(2)
-    # _node.apply_vehicle_control(1, 0.5, 0, False, 0)
-    # time.sleep(3.5)
-    # _node.apply_vehicle_control(1, -0.5, 0, False, 0)
-    # time.sleep(1.5)
-    # _drive_brake(_node)
-    # time.sleep(2)
 
 
 def to_supress_point(_emc_node, _emc_path, _ang):
@@ -2337,18 +2248,9 @@ def fight_plan(_hit_nodes, _weapon_nodes, _strike_info_list):
     change_line_fight(_hit_nodes[1])
     hit_enemy(_hit_nodes[2], _weapon_nodes[2], _strike_info_list[2])
 
-    # threads = []  # thread名称和飞机的重合，是否有风险？
-    # for i, _hit_node in enumerate(_hit_nodes):
-    #     if i != 0:
-    #         time.sleep(600)  # 让各个车之间错开180秒
-    #     thread = threading.Thread(target=hit_enemy, args=(_hit_node, _weapon_nodes[i], _strike_info_list[i]))
-    #     thread.start()
-    #     threads.append(thread)
-    # for thread in threads:
-    #     thread.join()
-
 
 '''——————————————————————————————————————————————————'''
+
 
 # 主函数
 if __name__ == "__main__":
@@ -2380,66 +2282,88 @@ if __name__ == "__main__":
         sw_code8, sw_node8 = swarm.create_node(swarm.ae_client, "四旋翼", 8)
         sw_code9, sw_node9 = swarm.create_node(swarm.ae_client, "四旋翼", 9)
         sw_code10, sw_node10 = swarm.create_node(swarm.ae_client, "四旋翼", 10)
+        sw = [sw_node1, sw_node2, sw_node3, sw_node4, sw_node5, sw_node6, sw_node7, sw_node8, sw_node9, sw_node10]
 
-        # # testposition
+        # (0) 动态地图
+        map_thread = threading.Thread(target=task_vis_map.core, args=(game, sw))
+        map_thread.start()
+
+        # #（1）无人机群侦察行动规划
+        # rc_time, rc_code = game.stage_start("reconnaissance_start")
+        # if rc_code == 200:
+        #     print("reconnaissance_start")
+        #     # print(rc_time)
+        #     flight_routes = drone_plan()  # 要让drone_plan()返回json格式的路径点
+        #     print(flight_routes)
+        #     rc_submit_time, rc_submit_code = game.submit_plane_route(flight_routes)
+        #     if rc_submit_code == 200:
+        #         print("reconnaissance_submit")
+        #         # print(rc_submit_time)
+        #         rc_complete_time, rc_complete_code = game.stage_complete("reconnaissance_end")
+        #         if rc_complete_code == 200:
+        #             print("reconnaissance_end")
+        #             # print(rc_complete_time)
+        #
+        # # （2）无人机群空中侦察
+        # va_rc_time, va_rc_code = game.stage_start("vau_reconnaissance_start")
+        # if va_rc_code == 200:
+        #     print("vau_reconnaissance_start")
+        #     # print(flight_routes)
+        #     vau_routes = json.loads(flight_routes)
+        #     drone_start_points = [
+        #         list(sw_node8.get_location()[:3]),
+        #         list(sw_node9.get_location()[:3]),
+        #         list(sw_node10.get_location()[:3])
+        #     ]
+        #     print(drone_start_points)
+        #     vanguard(vau_routes)  # 执行空中侦察、不断查询目标信息、目标位置信息存在列表target_info
+        #     va_rc_complete_time, va_rc_complete_code = game.stage_complete("vau_reconnaissance_end")
+        #     if va_rc_complete_code == 200:
+        #         print("vau_reconnaissance_end")
+
+        # #（3）局部路径规划
         # va_rc_complete_time, va_rc_complete_code = game.stage_complete("vau_reconnaissance_end")  # 测试用，不然调不出来路网地图，最后记得删除
-        # info = list(game.get_task_info())  # 将元组转换成列表 这两句话要优化，写一遍就行
-        # whole_arena_data = json.loads(info[0])  # 把区域信息提取出来，并解析为有效的字典
-        # start_line = whole_arena_data["subject_3"]["start_line"]
-        # end_line = whole_arena_data["subject_3"]["end_line"]
-        # vis_task_info(whole_arena_data)
-        # time.sleep(1e5)
-
-        #（1）无人机群侦察行动规划
-        rc_time, rc_code = game.stage_start("reconnaissance_start")
-        if rc_code == 200:
-            print("reconnaissance_start")
-            # print(rc_time)
-            flight_routes = drone_plan()  # 要让drone_plan()返回json格式的路径点
-            print(flight_routes)
-            rc_submit_time, rc_submit_code = game.submit_plane_route(flight_routes)
-            if rc_submit_code == 200:
-                print("reconnaissance_submit")
-                # print(rc_submit_time)
-                rc_complete_time, rc_complete_code = game.stage_complete("reconnaissance_end")
-                if rc_complete_code == 200:
-                    print("reconnaissance_end")
-                    # print(rc_complete_time)
-
-        # （2）无人机群空中侦察
-        va_rc_time, va_rc_code = game.stage_start("vau_reconnaissance_start")
-        if va_rc_code == 200:
-            print("vau_reconnaissance_start")
-            # print(flight_routes)
-            vau_routes = json.loads(flight_routes)
-            drone_start_points = [
-                list(sw_node8.get_location()[:3]),
-                list(sw_node9.get_location()[:3]),
-                list(sw_node10.get_location()[:3])
-            ]
-            print(drone_start_points)
-            vanguard(vau_routes)  # 执行空中侦察、不断查询目标信息、目标位置信息存在列表target_info
-            va_rc_complete_time, va_rc_complete_code = game.stage_complete("vau_reconnaissance_end")
-            if va_rc_complete_code == 200:
-                print("vau_reconnaissance_end")
-
-        #（3）局部路径规划
-        stage_3_core()
+        # plan_start_time, plan_start_code = game.stage_start("plan_start")
+        # if plan_start_code == 200:
+        #     print("【3阶段】集群路径规划任务开始")
+        #     info = list(game.get_task_info())  # 将元组转换成列表 这两句话要优化，写一遍就行
+        #     whole_arena_data = json.loads(info[0])  # 把区域信息提取出来，并解析为有效的字典
+        #     start_line = whole_arena_data["subject_3"]["start_line"]
+        #     end_line = whole_arena_data["subject_3"]["end_line"]
+        #
+        #     road_net_info = game.get_road_network()
+        #     map_img = road_net_info[0]
+        #     SCALE = road_net_info[1]
+        #     OFFSET_X = road_net_info[2][0]
+        #     OFFSET_Y = road_net_info[2][1]
+        #
+        #     plan_and_follow(sw, map_img, start_line, end_line)
+        #
+        #     print("打击车换道为之后科目做准备")
+        #     change_line_fight(sw_node2)
+        #     change_line_fight(sw_node1)
+        #     change_line_fight(sw_node3)
+        #     plan_complete_time, plan_complete_code = game.stage_complete("plan_end")
+        #     if plan_complete_code == 200:
+        #         print("【3阶段】集群路径规划任务结束")
 
         #  （4）道路开辟
-        # va_rc_complete_time, va_rc_complete_code = game.stage_complete("vau_reconnaissance_end")  # 测试用，不然调不出来路网地图，最后记得删除
+
+        # 测试用，不然调不出来路网地图，最后记得删除
+        va_rc_complete_time, va_rc_complete_code = game.stage_complete("vau_reconnaissance_end")
+        info = list(game.get_task_info())  # 将元组转换成列表 这两句话要优化，写一遍就行
+        whole_arena_data = json.loads(info[0])  # 把区域信息提取出来，并解析为有效的字典
+        start_line = whole_arena_data["subject_3"]["start_line"]
+        end_line = whole_arena_data["subject_3"]["end_line"]
+        road_net_info = game.get_road_network()
+        map_img = road_net_info[0]
+        SCALE = road_net_info[1]
+        OFFSET_X = road_net_info[2][0]
+        OFFSET_Y = road_net_info[2][1]
+
         mine_start_time, mine_start_code = game.stage_start("minesweeper_start")
         if mine_start_code == 200:
-            print("minesweeper_start")
-
-            # road_net_info = game.get_road_network()
-            # map_img = road_net_info[0]
-            # scale = road_net_info[1]
-            # offset_x = road_net_info[2][0]
-            # offset_y = road_net_info[2][1]  # 要优化写一遍就行
-            # info = list(game.get_task_info())  # 将元组转换成列表 这两句话要优化，写一遍就行！！！！！
-            # whole_arena_data = json.loads(info[0])  # 把区域信息提取出来，并解析为有效的字典
-
+            print("【4阶段】扫雷任务开始")
             mine_arena_ue = whole_arena_data["mine_arena"]
             mine_arena_pixel = [{"x": ue_to_pixel([mine_arena_ue[0]["x"], mine_arena_ue[0]["y"]])[0],
                                  "y": ue_to_pixel([mine_arena_ue[0]["x"], mine_arena_ue[0]["y"]])[1]},
@@ -2456,14 +2380,14 @@ if __name__ == "__main__":
             mine_rt_point_pixel = ue_to_pixel([mine_rt_point_ue["x"], mine_rt_point_ue["y"]])
             # 把路网图片中的横纵道路提取出来
             hor_roads, ver_roads = get_roads_in_region(map_img, mine_lb_point_pixel, mine_rt_point_pixel)
-            print("水平道路：", hor_roads)
-            print("竖直道路：", ver_roads)
+            # print("水平道路：", hor_roads)
+            # print("竖直道路：", ver_roads)
             # 给两辆车分配横纵道路的扫雷方案
             sweepers = [sw_node6, sw_node7]
             plan_sweep_route(sweepers, hor_roads, ver_roads)
             mine_complete_time, mine_complete_code = game.stage_complete("minesweeper_end")
             if mine_complete_code == 200:
-                print("minesweeper_end")
+                print("【4阶段】扫雷任务结束")
 
         # （5）电磁压制
         # va_rc_complete_time, va_rc_complete_code = game.stage_complete("vau_reconnaissance_end")  # 测试用，不然调不出来路网地图，最后记得删除
@@ -2476,9 +2400,9 @@ if __name__ == "__main__":
 
             map_array = list(tga_to_array(map_img))  # 得留着
 
-            # scale = road_net_info[1]
-            # offset_x = road_net_info[2][0]
-            # offset_y = road_net_info[2][1]  # 要优化写一遍就行
+            # SCALE = road_net_info[1]
+            # OFFSET_X = road_net_info[2][0]
+            # OFFSET_Y = road_net_info[2][1]  # 要优化写一遍就行
             # info = list(game.get_task_info())  # 将元组转换成列表 这两句话要优化，写一遍就行！！！！！
             # whole_arena_data = json.loads(info[0])  # 把区域信息提取出来，并解析为有效的字典
             # mine_arena_ue = whole_arena_data["mine_arena"]
@@ -2557,9 +2481,9 @@ if __name__ == "__main__":
             # road_net_info = game.get_road_network()
             # map_img = road_net_info[0]
             # map_array = list(tga_to_array(map_img))  # 得留着
-            # scale = road_net_info[1]
-            # offset_x = road_net_info[2][0]
-            # offset_y = road_net_info[2][1]  # 要优化写一遍就行
+            # SCALE = road_net_info[1]
+            # OFFSET_X = road_net_info[2][0]
+            # OFFSET_Y = road_net_info[2][1]  # 要优化写一遍就行
             # info = list(game.get_task_info())  # 将元组转换成列表 这两句话要优化，写一遍就行！！！！！
             # whole_arena_data = json.loads(info[0])  # 把区域信息提取出来，并解析为有效的字典
             # emc_arena_ue = whole_arena_data["emc_arena"]  # 第五部分有了到时候去掉
