@@ -558,15 +558,6 @@ def cross_the_end(_node, __end_line):  # 判断指定节点是否已经通过终
         return False
 
 
-# def obstacle_info_is_repeated(target_dict):  # 判断之前存过的目标信息是否和当前侦察到的重合
-#     if not obstacle_info:  # 当目标信息为空的时候，返回false表示不重复
-#         return False
-#     else:
-#         for target in obstacle_info:  # detect_res可能会包含之前已经探测到并存放到obstacle_info中的元素，因此要判断obstacle_info是否已经有了当前侦测到的目标
-#             if target_dict["Name"] == target["Name"]:
-#                 return True
-#         return False
-
 '''——————A* begin——————'''
 
 open_list = []
@@ -676,6 +667,8 @@ def Path_Search(map, start_pos1, target_position1, flag):  # flag = 1,过线就�
         # 对open_list里的内容按F的大小排序，从小到大
         open_list.sort(
             key=lambda elem: (G_value[elem.x][elem.y] + H_value[elem.x][elem.y]))  # 将各个待检查的节点都放入openlist中并进行排序
+    print("A*搜索失败")
+    return []
 
 
 # 作搜索前处理，将原始彩色图初始化为0（有障碍）,1（无障碍）的地图
@@ -699,6 +692,7 @@ def Process_before(image):
 def dict_slice(pos_dict):  # 输出Astar路线坐标切片（每隔5个输出1个）
     if not pos_dict:
         print("未找到路径,不能切片")
+        return []
     else:
         dict5_tmp = pos_dict[::30]
         if len(pos_dict) % 30 != 1:
@@ -1359,7 +1353,7 @@ def keep_straight(_vehicle, _y):
 
 
 def tail_the_explorer(map_rgb, node, end_point_fine_pixel, _end_line_ue, yield_duration, follower_path):
-    print(node.get_node_info()[1],"start tail")
+    print(node.get_node_info()[1],"开始执行explorer规划路线")
     last_state = 'start'
     last_mode = 'z'
     last_toward = 'z'
@@ -1379,6 +1373,7 @@ def tail_the_explorer(map_rgb, node, end_point_fine_pixel, _end_line_ue, yield_d
         last = list(veh_go_to(node, _cur_location_ue, _path_point_ue, _path_point_next_ue, last))
 
         if cross_the_end(node, _end_line_ue):
+            print(node.get_node_info()[1], "已通过终点线")
             start_time = time.time()
             while time.time() - start_time < yield_duration:
                 cur_y = node.get_location()[1]
@@ -1395,10 +1390,10 @@ def follow_the_explorer(vehicle_nodes, map_rgb, end_point_fine_pixel, _end_line_
         start_point_ue = [follower.get_location()[0], follower.get_location()[1]]
         start_point_pixel = ue_to_pixel(start_point_ue)
         follower_path = find_path(map_rgb, start_point_pixel, end_point_fine_pixel, 1)  # start_point, end_point是列表格式
-        thread = threading.Thread(target=tail_the_explorer, args=(map_rgb, follower, end_point_fine_pixel, _end_line_ue, 5 - i, follower_path))
+        thread = threading.Thread(target=tail_the_explorer, args=(map_rgb, follower, end_point_fine_pixel, _end_line_ue, 6 - i, follower_path))
         thread.start()
         threads.append(thread)
-        time.sleep(10)
+        # time.sleep(7)
 
     for thread in threads:
         thread.join()
@@ -1580,10 +1575,10 @@ def veh_move(_veh, _path):  # 输入像素坐标点，让车按照规划的轨�
         path_point_next_ue = pixel_to_ue(path_point_next_pixel)  # 当前要前往的坐标点的下一个坐标点，对于最后一个点要怎么处理??
         _cur_location_ue = [_veh.get_location()[0], _veh.get_location()[1]]  # 当前的位置坐标
         last = list(veh_go_to(_veh, _cur_location_ue, _path_point_ue, path_point_next_ue, last))
-    _drive_brake(_veh)
+    brakedown(_veh)
 
 
-def sweeper_go_to(__sweeper, _sweep_route, _flag):  # 给扫雷车定制的轨迹跟踪方案（文博）flag为0调用横向的，为1调用纵向的
+def sweeper_go_to(__sweeper, _sweep_route, _flag):  # 扫雷车定制迹跟踪方案,flag为0调用横向的，为1调用纵向的
     # x为横向 y为纵向 这里设置的临界值为5，即横向超过5m认为需要变道
     # preprocessing函数是为了将相邻的两个直角转弯点的后一个删去
     # 横向调用x开头的两个函数，纵向调用y开头的两个函数
@@ -1608,7 +1603,7 @@ def sweeper_go_to(__sweeper, _sweep_route, _flag):  # 给扫雷车定制的轨�
         if abs(y2 - y1) >= cv:
             state = 'change'
             if x2 <= x1:
-                _drive_brake(_node)
+                brakedown(_node)
             else:  # x2>x1
                 _reverse_brake(_node)
         else:
@@ -1667,7 +1662,7 @@ def sweeper_go_to(__sweeper, _sweep_route, _flag):  # 给扫雷车定制的轨�
         if abs(x2 - x1) >= cv:
             state = 'change'
             if y2 <= y1:
-                _drive_brake(_node)
+                brakedown(_node)
             else:  # x2>x1
                 _reverse_brake(_node)
         else:
@@ -1691,7 +1686,7 @@ def sweeper_go_to(__sweeper, _sweep_route, _flag):  # 给扫雷车定制的轨�
                 kp_yaw = -0.08
             else:
                 kp_yaw = 0.08
-        print(state)
+        # print(state)
         while True:
             x, y, z, sw_time = _node.get_location()
             yaw, pitch, roll, heading, frame_timestamp = _node.get_attitude()
@@ -1707,15 +1702,15 @@ def sweeper_go_to(__sweeper, _sweep_route, _flag):  # 给扫雷车定制的轨�
                     break
 
     if _flag:
-        sweeper_path_cur = y_preprocessing(_sweep_route)
-        for index, path_point in enumerate(sweeper_path_cur):  # 规划出的路径是由字典构成的列表
+        # sweeper_path_cur = y_preprocessing(_sweep_route)
+        for index, path_point in enumerate(_sweep_route):  # 规划出的路径是由字典构成的列表
             path_point_ue = [path_point["x"], path_point["y"]]  # 当前要前往的坐标点
             cur_location = [__sweeper.get_location()[0], __sweeper.get_location()[1]]  # 当前的位置坐标
             # print(cur_location, path_point_ue)
             y_go_to(__sweeper, cur_location, path_point_ue)
     else:
-        sweeper_path_cur = x_preprocessing(_sweep_route)
-        for index, path_point in enumerate(sweeper_path_cur):  # 规划出的路径是由字典构成的列表
+        # sweeper_path_cur = x_preprocessing(_sweep_route)
+        for index, path_point in enumerate(_sweep_route):  # 规划出的路径是由字典构成的列表
             path_point_ue = [path_point["x"], path_point["y"]]  # 当前要前往的坐标点
             cur_location = [__sweeper.get_location()[0], __sweeper.get_location()[1]]  # 当前的位置坐标
             # print(cur_location, path_point_ue)
@@ -1751,9 +1746,9 @@ def sweeper_hor_plan(__sweeper, _hor_road, _ver_road, _to_hor_mine_path):  # 单
         hor_sweep_route.append({"x": round(hor_sweeper_current_x, 1), "y": round(hor_sweeper_current_y, 1)})
         hor_direction = "left" if hor_direction == "right" else "right"
         hor_n -= 1
-    print(hor_sweep_route)
+    # print(hor_sweep_route)
     sweeper_go_to(__sweeper, hor_sweep_route, 0)  # 规划完之后让车跟着轨迹走，0横向
-    _drive_brake(__sweeper)
+    brakedown(__sweeper)
 
 
 def sweeper_ver_plan(__sweeper, _hor_road, _ver_road, _to_ver_mine_path):  # 单个扫雷车横纵道路轨迹规划
@@ -1784,9 +1779,9 @@ def sweeper_ver_plan(__sweeper, _hor_road, _ver_road, _to_ver_mine_path):  # 单
         ver_sweep_route.append({"x": round(ver_sweeper_current_x, 1), "y": round(ver_sweeper_current_y, 1)})
         ver_direction = "down" if ver_direction == "up" else "up"
         ver_n -= 1
-    print(ver_sweep_route)
+    # print(ver_sweep_route)
     sweeper_go_to(__sweeper, ver_sweep_route, 1)  # 规划完之后让车跟着轨迹走，1纵向
-    _drive_brake(__sweeper)
+    brakedown(__sweeper)
 
 
 def plan_sweep_route(_sweepers, _hor_roads, _ver_roads):  # 给两个扫雷车分别开一个线程，一个车管一横一纵两条路
@@ -1811,10 +1806,12 @@ def plan_sweep_route(_sweepers, _hor_roads, _ver_roads):  # 给两个扫雷车�
                                      0)  # map还得传进来？？？要改成像素坐标！！！
     to_hor_mine_path.append(hor_cur_start_path_1)
 
+    task_flag[3] = True
+    print("扫除两横雷区中")
     threads1 = []
     for i, _sweeper in enumerate(_sweepers):
-        if i != 0:
-            time.sleep(10)  # 让各个车之间错开60秒
+        # if i != 0:
+        #     time.sleep(10)
         thread = threading.Thread(target=sweeper_hor_plan,
                                   args=(_sweeper, _hor_roads[i], _ver_roads[i], to_hor_mine_path[i]))
         thread.start()
@@ -1822,6 +1819,7 @@ def plan_sweep_route(_sweepers, _hor_roads, _ver_roads):  # 给两个扫雷车�
     for thread in threads1:
         thread.join()
 
+    print("扫除两纵雷区中")
     to_ver_mine_path = []
     ver_lb_ue_0 = pixel_to_ue([_ver_roads[0]["left_x"], _ver_roads[0]["start_y"]])
     ver_rt_ue_0 = pixel_to_ue([_ver_roads[0]["right_x"], _ver_roads[0]["end_y"]])
@@ -1845,8 +1843,8 @@ def plan_sweep_route(_sweepers, _hor_roads, _ver_roads):  # 给两个扫雷车�
 
     threads2 = []
     for i, _sweeper in enumerate(_sweepers):
-        if i != 0:
-            time.sleep(25)  # 让各个车之间错开60秒
+        # if i != 0:
+        #     time.sleep(25)  # 让各个车之间错开60秒
         thread = threading.Thread(target=sweeper_ver_plan,
                                   args=(_sweeper, _hor_roads[i], _ver_roads[i], to_ver_mine_path[i]))
         thread.start()
@@ -2057,7 +2055,7 @@ def change_line(_node):  # 电磁干扰车要换道躲开前方的打击车，�
         if yaw > 50:
             _node.apply_vehicle_control(1, -0.5, 0, False, 0)
         if yaw < 0:
-            _drive_brake(_node)
+            brakedown(_node)
             time.sleep(2)
             break
 
@@ -2285,7 +2283,8 @@ if __name__ == "__main__":
         sw = [sw_node1, sw_node2, sw_node3, sw_node4, sw_node5, sw_node6, sw_node7, sw_node8, sw_node9, sw_node10]
 
         # (0) 动态地图
-        map_thread = threading.Thread(target=task_vis_map.core, args=(game, sw))
+        task_flag = [False, False, False, False, False, False]
+        map_thread = threading.Thread(target=task_vis_map.core, args=(game, sw, task_flag))
         map_thread.start()
 
         # #（1）无人机群侦察行动规划
@@ -2321,45 +2320,49 @@ if __name__ == "__main__":
         #     if va_rc_complete_code == 200:
         #         print("vau_reconnaissance_end")
 
-        # #（3）局部路径规划
-        # va_rc_complete_time, va_rc_complete_code = game.stage_complete("vau_reconnaissance_end")  # 测试用，不然调不出来路网地图，最后记得删除
-        # plan_start_time, plan_start_code = game.stage_start("plan_start")
-        # if plan_start_code == 200:
-        #     print("【3阶段】集群路径规划任务开始")
-        #     info = list(game.get_task_info())  # 将元组转换成列表 这两句话要优化，写一遍就行
-        #     whole_arena_data = json.loads(info[0])  # 把区域信息提取出来，并解析为有效的字典
-        #     start_line = whole_arena_data["subject_3"]["start_line"]
-        #     end_line = whole_arena_data["subject_3"]["end_line"]
-        #
-        #     road_net_info = game.get_road_network()
-        #     map_img = road_net_info[0]
-        #     SCALE = road_net_info[1]
-        #     OFFSET_X = road_net_info[2][0]
-        #     OFFSET_Y = road_net_info[2][1]
-        #
-        #     plan_and_follow(sw, map_img, start_line, end_line)
-        #
-        #     print("打击车换道为之后科目做准备")
-        #     change_line_fight(sw_node2)
-        #     change_line_fight(sw_node1)
-        #     change_line_fight(sw_node3)
-        #     plan_complete_time, plan_complete_code = game.stage_complete("plan_end")
-        #     if plan_complete_code == 200:
-        #         print("【3阶段】集群路径规划任务结束")
+        #（3）局部路径规划
+        va_rc_complete_time, va_rc_complete_code = game.stage_complete("vau_reconnaissance_end")  # 测试用，不然调不出来路网地图，最后记得删除
+        plan_start_time, plan_start_code = game.stage_start("plan_start")
+        if plan_start_code == 200:
+            print("【3阶段】集群路径规划任务开始")
+            info = list(game.get_task_info())  # 将元组转换成列表 这两句话要优化，写一遍就行
+            whole_arena_data = json.loads(info[0])  # 把区域信息提取出来，并解析为有效的字典
+            start_line = whole_arena_data["subject_3"]["start_line"]
+            end_line = whole_arena_data["subject_3"]["end_line"]
+
+            road_net_info = game.get_road_network()
+            map_img = road_net_info[0]
+            SCALE = road_net_info[1]
+            OFFSET_X = road_net_info[2][0]
+            OFFSET_Y = road_net_info[2][1]
+
+            plan_and_follow(sw, map_img, start_line, end_line)
+
+            print("打击车换道为之后科目做准备")
+            threads = []
+            for i in range(3):
+                thread = threading.Thread(target=change_line_fight, args=sw[i])
+                thread.start()
+                threads.append(thread)
+            for thread in threads:
+                thread.join()
+
+            plan_complete_time, plan_complete_code = game.stage_complete("plan_end")
+            if plan_complete_code == 200:
+                print("【3阶段】集群路径规划任务结束")
 
         #  （4）道路开辟
-
-        # 测试用，不然调不出来路网地图，最后记得删除
-        va_rc_complete_time, va_rc_complete_code = game.stage_complete("vau_reconnaissance_end")
-        info = list(game.get_task_info())  # 将元组转换成列表 这两句话要优化，写一遍就行
-        whole_arena_data = json.loads(info[0])  # 把区域信息提取出来，并解析为有效的字典
-        start_line = whole_arena_data["subject_3"]["start_line"]
-        end_line = whole_arena_data["subject_3"]["end_line"]
-        road_net_info = game.get_road_network()
-        map_img = road_net_info[0]
-        SCALE = road_net_info[1]
-        OFFSET_X = road_net_info[2][0]
-        OFFSET_Y = road_net_info[2][1]
+        # # 测试用，不然调不出来路网地图，最后记得删除
+        # va_rc_complete_time, va_rc_complete_code = game.stage_complete("vau_reconnaissance_end")
+        # info = list(game.get_task_info())  # 将元组转换成列表 这两句话要优化，写一遍就行
+        # whole_arena_data = json.loads(info[0])  # 把区域信息提取出来，并解析为有效的字典
+        # start_line = whole_arena_data["subject_3"]["start_line"]
+        # end_line = whole_arena_data["subject_3"]["end_line"]
+        # road_net_info = game.get_road_network()
+        # map_img = road_net_info[0]
+        # SCALE = road_net_info[1]
+        # OFFSET_X = road_net_info[2][0]
+        # OFFSET_Y = road_net_info[2][1]
 
         mine_start_time, mine_start_code = game.stage_start("minesweeper_start")
         if mine_start_code == 200:
